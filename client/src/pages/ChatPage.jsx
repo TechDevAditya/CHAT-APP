@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import UserList from '../components/UserList';
 
 function ChatPage(){
     const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -27,20 +29,26 @@ function ChatPage(){
         fetchUsers();
     }, []);
 
+    const handleSelectUser = (user) => {
+        setSelectedUser(user);
+        console.log("Selected user:", user);
+    }
+
     return (
         <div>
             <h1>Chat Page</h1>
-            <div className="user-list">
-                <h2>Users</h2>
-                <ul>
-                    {users.map((user) => (
-                        <li key={user._id}>
-                            {user.name}
-                        </li>
-                    ))}
-                </ul>
+            {/* 4. Use the UserList component and pass propertiess to it */}
+            <UserList users={users} onSelectUser={handleSelectUser} />
+
+            <div className="message-window">
+                {/* who is selected */}
+                {selectedUser ? (
+                    <h2>Chatting with: {selectedUser.name}</h2>
+                ) : (
+                    <h2>Please select a user to start chatting.</h2>
+                )}
+                {/* We will add the message history and input box here */}
             </div>
-            {/* We will add the message window component here later */}
         </div>
     );
 }
