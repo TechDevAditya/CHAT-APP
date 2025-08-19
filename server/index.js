@@ -2,9 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();               //for dotenv file to manage our private keys.
+const http= require('http');
+const {Server} = require("socket.io");
 
 const app = express();          //Initialising the express server.
-
 app.use(cors());                     //frontend communication
 app.use(express.json());               //json to readable
 
@@ -21,7 +22,24 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', require('./routes/auth.routes'));  //auth routes
 
+const server = http.createServer(app);     //Create http server from express app
+
+const io = new Server(server,{
+  cors: {
+    origin: "http://localhost:5174",
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('A new user connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
 //Start the server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port: ${PORT}`);
 });
