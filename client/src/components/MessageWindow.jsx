@@ -1,15 +1,18 @@
 import React from 'react';
 
-function MessageWindow({ messages }) {
+function MessageWindow({ messages, currentUserId }) {
     return (
         <div className="message-window">
             <h2>Messages</h2>
             <ul>
-                {messages.map((msg, index) => (
+                {messages.map((msg, index) => {
+                    //check if the message sender is the current user
+                    const isCurrentUser = msg.sender.id === currentUserId;
+                    const senderName = isCurrentUser ? 'You' : msg.sender.name;
                     <li key={index}>
-                        <strong>{msg.sender}: </strong> {msg.text}
+                        <strong>{senderName}: </strong> {msg.text}
                     </li>
-                ))}
+                })}
             </ul>
         </div>
     )

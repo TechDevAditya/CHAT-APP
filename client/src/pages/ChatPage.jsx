@@ -14,8 +14,17 @@ function ChatPage(){
         // Connect to the server
         socket.connect();
 
+        //register current user with server
+        const userId = localStorage.getItem('userId');
+        if(userId){
+            socket.emit('register_user', userId);
+        }
+
         function onReceiveMessage(data) {
-            setMessages(prevMessages => [...prevMessages, data]);
+            // To avoid echo
+            if (data.sender.id !== userId) {
+                setMessages(prevMessages => [...prevMessages, data]);
+            }
         }
 
         // Listen for incoming messages
@@ -48,18 +57,25 @@ function ChatPage(){
         console.log("Selected user:", user);
     }
 
-    const handleSendMessage = (message) => {
+    const handleSendMessage = (messageText) => {
         if (selectedUser) {
-            const newMessage = {
-                sender: 'You', // This should be dynamic later
-                text: message
-            };
+            const senderName = localStorage.getItem('name');
+            const senderId = localStorage.getItem('userId');
+
+            const newMessage={
+                sender: { id: senderId, name: senderName }, // Send sender's full info
+                text: messageText
+            }
 
             // Add our own message to the window immediately
             setMessages(prevMessages => [...prevMessages, newMessage]);
 
-            // Emit the message to the server
-            socket.emit('send_message', newMessage);
+            // Emit the message now with the recepient's ID
+            socket.emit('send_message', {
+                recipientId: selectedUser._id,
+                text: messageText,
+                sender: { id: senderId, name: senderName }
+            });
         }
     };
 
@@ -72,7 +88,7 @@ function ChatPage(){
                 {selectedUser ? (
                     <>
                         <h2>Chatting with: {selectedUser.name}</h2>
-                        <MessageWindow messages={messages} />
+                        <MessageWindow messages={messages} currentUserId= {localStorage.getItem('userId')} />
                         <MessageInput onSendMessage={handleSendMessage} />
                     </>
                 ) : (

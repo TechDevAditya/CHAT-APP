@@ -13,8 +13,11 @@ function LoginPage() {
                 {email,password}
             );
 
-            const {token} = response.data;
+            const {token, userId, name} = response.data;
+
             localStorage.setItem('token', token);
+            localStorage.setItem('userId', userId);
+            localStorage.setItem('name', name);
 
             axios.defaults.headers.common['Authorization'] = 'Bearer ${token}';
 
