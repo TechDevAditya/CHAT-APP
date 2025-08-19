@@ -25,6 +25,8 @@ app.use('/api/users', require('./routes/user.routes.js'));  // use users routes 
 
 const server = http.createServer(app);     //Create http server from express app
 
+const userSocketMap = {};
+
 const io = new Server(server,{
   cors: {
     origin: "http://localhost:5173",
@@ -35,11 +37,33 @@ const io = new Server(server,{
 io.on('connection', (socket) => {
   console.log('A new user connected:', socket.id);
 
-  socket.on('send_message', (data) => {
-    socket.broadcast.emit('receive_message', data);  //send the event receiev_message to other connected sockets except for the one sending it
+  //listens for an event when a user registers with their ID
+  socket.on('register_user', (userId) => {
+    userSocketMap[userId] = socket.id;
+    console.log('User registered:', userId, 'with socket ID:', socket.id);
+  });
+
+  //Listens for a private message
+  socket.on('send_message', ({recipientId, text, sender}) => {
+    const recipientSocketId = userSocketMap[recipientId];
+
+    if(recipientSocketId){
+      //send messages directly to the recipient's alloted socket
+      io.to(recipientSocketId).emit('receive_message', {
+        sender,
+        text,
+      });
+    }
   });
 
   socket.on('disconnect', () => {
+    //clean up the map when user disconnects
+    for(const userId in userSocketMap){
+      if(userSocketMap[userId] == socket.id){
+        delete userSocketMap[userId];
+        break;
+      }
+    }
     console.log('User disconnected:', socket.id);
   });
 });
