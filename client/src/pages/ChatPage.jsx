@@ -11,40 +11,37 @@ function ChatPage(){
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
+        // Connect to the server
+        socket.connect();
+
+        function onReceiveMessage(data) {
+            setMessages(prevMessages => [...prevMessages, data]);
+        }
+
+        // Listen for incoming messages
+        socket.on('receive_message', onReceiveMessage);
+
+        // Fetch the initial user list
         const fetchUsers = async () => {
             try {
                 const token = localStorage.getItem('token');
-                if(!token){
-                    return;
-                }
-
+                if (!token) return;
                 const response = await axios.get('http://localhost:5000/api/users', {
-                    headers: {
-                        Authorization: `Bearer ${token}` // Send the token for authorization
-                    }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
-
                 setUsers(response.data);
             } catch (error) {
                 console.error('Failed to fetch users', error);
             }
         };
-
         fetchUsers();
-    }, []);
 
-    //to listen for incoming messages
-    useEffect(() => {
-        function onReceiveMessage(data){
-            setMessages(prevMessages => [...prevMessages, data]);
-        }
-
-        socket.on('receive_message', onReceiveMessage);
-
+        // Cleanup function: This runs when the component unmounts
         return () => {
-            socket.off('receieve_message', onReceiveMessage);
+            socket.off('receive_message', onReceiveMessage);
+            socket.disconnect();
         };
-    }, []);
+    }, []); // Runs only once when the component mounts
 
     const handleSelectUser = (user) => {
         setSelectedUser(user);
