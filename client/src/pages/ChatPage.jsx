@@ -3,15 +3,12 @@ import axios from 'axios';
 import UserList from '../components/UserList';
 import MessageWindow from '../components/MessageWindow'; 
 import MessageInput from '../components/MessageInput';  
+import {socket} from '../socket';  //import the shared socket instant
 
 function ChatPage(){
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [messages, setMessages] = useState([
-        {sender: 'adi', text: 'Hey, how are you?'},
-        {sender: 'You', text: 'I am good, thanks'}
-
-    ]);
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -36,16 +33,37 @@ function ChatPage(){
         fetchUsers();
     }, []);
 
+    //to listen for incoming messages
+    useEffect(() => {
+        function onReceiveMessage(data){
+            setMessages(prevMessages => [...prevMessages, data]);
+        }
+
+        socket.on('receive_message', onReceiveMessage);
+
+        return () => {
+            socket.off('receieve_message', onReceiveMessage);
+        };
+    }, []);
+
     const handleSelectUser = (user) => {
         setSelectedUser(user);
         console.log("Selected user:", user);
     }
 
     const handleSendMessage = (message) => {
-        console.log(`Sending message to ${selectedUser.name}: ${message}`);
-        // LATER: We will replace this with socket.emit()
-        const newMessage = { sender: 'You', text: message };
-        setMessages(prevMessages => [...prevMessages, newMessage]);
+        if (selectedUser) {
+            const newMessage = {
+                sender: 'You', // This should be dynamic later
+                text: message
+            };
+
+            // Add our own message to the window immediately
+            setMessages(prevMessages => [...prevMessages, newMessage]);
+
+            // Emit the message to the server
+            socket.emit('send_message', newMessage);
+        }
     };
 
 
