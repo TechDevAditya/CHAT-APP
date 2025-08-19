@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import UserList from '../components/UserList';
+import MessageWindow from '../components/MessageWindow'; 
+import MessageInput from '../components/MessageInput';  
 
 function ChatPage(){
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [messages, setMessages] = useState([
+        {sender: 'adi', text: 'Hey, how are you?'},
+        {sender: 'You', text: 'I am good, thanks'}
+
+    ]);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -34,23 +41,32 @@ function ChatPage(){
         console.log("Selected user:", user);
     }
 
+    const handleSendMessage = (message) => {
+        console.log(`Sending message to ${selectedUser.name}: ${message}`);
+        // LATER: We will replace this with socket.emit()
+        const newMessage = { sender: 'You', text: message };
+        setMessages(prevMessages => [...prevMessages, newMessage]);
+    };
+
+
     return (
-        <div>
-            <h1>Chat Page</h1>
-            {/* 4. Use the UserList component and pass propertiess to it */}
+        <div style={{ display: 'flex' }}>
             <UserList users={users} onSelectUser={handleSelectUser} />
 
-            <div className="message-window">
-                {/* who is selected */}
+            <div className="chat-area">
                 {selectedUser ? (
-                    <h2>Chatting with: {selectedUser.name}</h2>
+                    <>
+                        <h2>Chatting with: {selectedUser.name}</h2>
+                        <MessageWindow messages={messages} />
+                        <MessageInput onSendMessage={handleSendMessage} />
+                    </>
                 ) : (
                     <h2>Please select a user to start chatting.</h2>
                 )}
-                {/* We will add the message history and input box here */}
             </div>
         </div>
     );
+
 }
 
 export default ChatPage;
