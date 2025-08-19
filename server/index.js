@@ -20,7 +20,8 @@ app.get('/', (req, res) => {
   res.send('Hello, the chat server is running!');
 });
 
-app.use('/api/auth', require('./routes/auth.routes'));  //auth routes
+app.use('/api/auth', require('./routes/auth.routes'));      //use auth routes from this file 
+app.use('/api/users', require('./routes/user.routes.js'));  // use users routes from this file
 
 const server = http.createServer(app);     //Create http server from express app
 
