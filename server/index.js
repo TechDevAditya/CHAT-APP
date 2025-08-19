@@ -26,13 +26,17 @@ const server = http.createServer(app);     //Create http server from express app
 
 const io = new Server(server,{
   cors: {
-    origin: "http://localhost:5174",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
 
 io.on('connection', (socket) => {
   console.log('A new user connected:', socket.id);
+
+  socket.on('test_message', (data) => {
+    console.log(`Received test message from ${socket.id}:`, data);
+  });
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
