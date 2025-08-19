@@ -19,6 +19,8 @@ app.get('/', (req, res) => {
   res.send('Hello, the chat server is running!');
 });
 
+app.use('/api/auth', require('./routes/auth.routes'));  //auth routes
+
 //Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port: ${PORT}`);

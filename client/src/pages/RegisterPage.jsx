@@ -6,11 +6,23 @@ function RegisterPage(){
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
-        console.log('Form submitted with:', { name, email, password });
 
-        // LATER: We will add the code here to send this data to our backend API.
+        try {
+            // POST request using axios 
+            const response = await axios.post(
+                'http://localhost:5000/api/auth/register', // Backend endpoint
+                { name, email, password }                 // data in the post request
+            );
+
+            console.log('Registration successful:', response.data);
+            alert('Registration successful! You can now log in.');
+
+        } catch (error) {
+            console.error('Registration error:', error.response.data.message);
+            alert(`Registration failed: ${error.response.data.message}`);
+        }
     };
 
     return (
