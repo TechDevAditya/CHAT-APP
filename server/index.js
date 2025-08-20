@@ -5,6 +5,7 @@ require('dotenv').config();               //for dotenv file to manage our privat
 const http= require('http');
 const {Server} = require("socket.io");
 const User = require('./models/user.model');
+const Message = require('./models/message.model');
 
 const app = express();          //Initialising the express server.
 app.use(cors());                     //frontend communication
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', require('./routes/auth.routes'));      //use auth routes from this file 
 app.use('/api/users', require('./routes/user.routes.js'));  // use users routes from this file
+app.use('/api/messages', require('./routes/message.routes.js'));   //from this api use message.routes.js
 
 const server = http.createServer(app);     //Create http server from express app
 
@@ -52,20 +54,48 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('user_online', {userId});
   });
 
-  socket.on('send_message', ({ recipientId, text, sender }) => {
-      const recipientSocketIds = userSocketMap[recipientId];
+  //event listener
+  // socket.on('send_message', async ({ recipientId, text, sender }) => {
+  //     const recipientSocketIds = userSocketMap[recipientId];
         
-      if (recipientSocketIds && recipientSocketIds.length > 0) {
-          recipientSocketIds.forEach(socketId => {
-            // don't send back to the sender's own socket
-            if (socketId !== socket.id) {
-              io.to(socketId).emit('receive_message', {
-                sender,
-                text,
-              });
-            }
-          });
-      }
+  //     if (recipientSocketIds && recipientSocketIds.length > 0) {
+  //         recipientSocketIds.forEach(socketId => {
+  //           // don't send back to the sender's own socket
+  //           if (socketId !== socket.id) {
+  //             io.to(socketId).emit('receive_message', {
+  //               sender,
+  //               text,
+  //             });
+  //           }
+  //         });
+  //     }
+  // });
+
+  socket.on('send_message', async ({ recipientId, text, sender }) => {
+    try {
+        // 1. Create a new message instance
+        const newMessage = new Message({
+            senderId: sender.id,
+            recipientId: recipientId,
+            text: text
+        });
+
+        // 2. Save the message to the database
+        await newMessage.save();
+
+        // 3. Send the message to the recipient in real-time
+        const recipientSocketIds = userSocketMap[recipientId];
+        if (recipientSocketIds && recipientSocketIds.length > 0) {
+            recipientSocketIds.forEach(socketId => {
+                io.to(socketId).emit('receive_message', {
+                    sender,
+                    text,
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error saving or sending message:', error);
+    }
   });
 
   socket.on('disconnect', async () => {

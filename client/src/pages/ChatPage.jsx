@@ -90,8 +90,36 @@ function ChatPage(){
         };
     }, []); // Runs only once when the component mounts
 
-    const handleSelectUser = (user) => {
+    const handleSelectUser = async (user) => {
         setSelectedUser(user);
+
+        //fetch the chat history once the user is selected
+        try {
+            const currentUserId = localStorage.getItem('userId');
+            const token = localStorage.getItem('token');
+
+            const response = await axios.get(
+                `http://localhost:5000/api/messages/${currentUserId}/${user._id}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            //backend should now send messages from atlas
+            const formattedmessages= response.data.map(msg => ({
+                text: msg.text,
+                sender: {
+                    id: msg.senderId,
+                    name: msg.senderId === currentUserId ? 'You' : user.name
+                }
+            }));
+
+            setMessages(formattedmessages);
+        } catch(error) {
+            console.error('Failed to fetch message history', error);
+            setMessages([]);    //Clear messages on error or if none exists
+        }
+
         console.log("Selected user:", user);
     }
 
