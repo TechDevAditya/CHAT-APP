@@ -4,6 +4,7 @@ const cors = require('cors');
 require('dotenv').config();               //for dotenv file to manage our private keys.
 const http= require('http');
 const {Server} = require("socket.io");
+const User = require('./models/user.model');
 
 const app = express();          //Initialising the express server.
 app.use(cors());                     //frontend communication
@@ -38,12 +39,17 @@ const userSocketMap = {}; // Maps userId to an array of socketIds
 
 io.on('connection', (socket) => {
   console.log('A new user connected:', socket.id);
+  let currentUserId;  //variable to hold user id for this socket connection
 
-  socket.on('register_user', (userId) => {
+  socket.on('register_user', async (userId) => {
+      currentUserId = userId;
       if (!userSocketMap[userId]) {
           userSocketMap[userId] = [];
       }
       userSocketMap[userId].push(socket.id);
+
+      await User.findByIdAndUpdate(userId, {isOnline: true});
+      socket.broadcast.emit('user_online', {userId});
   });
 
   socket.on('send_message', ({ recipientId, text, sender }) => {
@@ -62,25 +68,44 @@ io.on('connection', (socket) => {
       }
   });
 
-  socket.on('disconnect', () => {
-      // Find which user this socket belonged to and remove it
-      for (const userId in userSocketMap) {
-          const socketIds = userSocketMap[userId];
+  socket.on('disconnect', async () => {
+      if (currentUserId) {
+          // Remove the disconnected socket from the user's list
+          const socketIds = userSocketMap[currentUserId];
           const index = socketIds.indexOf(socket.id);
-
           if (index !== -1) {
-              // Remove just that one socket ID from the list
               socketIds.splice(index, 1);
+          }
 
-              // If the user has no more connections, remove them entirely
-              if (socketIds.length === 0) {
-                  delete userSocketMap[userId];
-              }
-              break; // Stop searching once we've found and removed it
+          // If the user has no more open connections, mark them as offline
+          if (socketIds.length === 0) {
+              delete userSocketMap[currentUserId];
+              await User.findByIdAndUpdate(currentUserId, { isOnline: false, lastSeen: new Date() });
+              socket.broadcast.emit('user_offline', { userId: currentUserId });
           }
       }
       console.log('User disconnected:', socket.id);
   });
+
+  // socket.on('disconnect', () => {
+  //     // Find which user this socket belonged to and remove it
+  //     for (const userId in userSocketMap) {
+  //         const socketIds = userSocketMap[userId];
+  //         const index = socketIds.indexOf(socket.id);
+
+  //         if (index !== -1) {
+  //             // Remove just that one socket ID from the list
+  //             socketIds.splice(index, 1);
+
+  //             // If the user has no more connections, remove them entirely
+  //             if (socketIds.length === 0) {
+  //                 delete userSocketMap[userId];
+  //             }
+  //             break; // Stop searching once we've found and removed it
+  //         }
+  //     }
+  //     console.log('User disconnected:', socket.id);
+  // });
 });
 
 //Start the server

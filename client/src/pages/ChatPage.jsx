@@ -16,19 +16,40 @@ function ChatPage(){
         socket.connect();
 
         //register current user with server
-        const userId = localStorage.getItem('userId');
-        if(userId){
-            socket.emit('register_user', userId);
+        const currentUserId = localStorage.getItem('userId');
+        // if(userId){
+        //     socket.emit('register_user', userId);
+        // }
+
+        if(currentUserId){
+            socket.emit('register_user', currentUserId);
         }
 
-        // New version for testing
         function onReceiveMessage(data) {
             console.log("A message was received from the server:", data);
             setMessages(prevMessages => [...prevMessages, data]);
         }
 
+        function onUserOnline({userId}) {
+            setUsers(prevUsers =>
+                prevUsers.map(user =>
+                    user._id === userId ? {...user, isOnline:true} : user
+                )
+            );
+        }
+
+        function onUserOffline({userId, lastSeen}) {
+            setUsers(prevUsers =>
+                prevUsers.map(user =>
+                    user._id === userId ? {...user, isOnline: false, lastSeen: lastSeen} : user
+                )
+            );
+        }
+
         // Listen for incoming messages
         socket.on('receive_message', onReceiveMessage);
+        socket.on('user_online', onUserOnline);     
+        socket.on('user_offline', onUserOffline);   
 
         // Fetch the initial user list
         const fetchUsers = async () => {
@@ -39,6 +60,14 @@ function ChatPage(){
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setUsers(response.data);
+
+                const currentUserId = localStorage.getItem('userId');
+                const updatedUsers = response.data.map(user =>
+                   user._id === currentUserId ? { ...user, isOnline: true } : user
+                );
+                setUsers(updatedUsers);
+
+
             } catch (error) {
                 console.error('Failed to fetch users', error);
             }
@@ -48,6 +77,8 @@ function ChatPage(){
         // Cleanup function: This runs when the component unmounts
         return () => {
             socket.off('receive_message', onReceiveMessage);
+            socket.off('user_online', onUserOnline);       
+            socket.off('user_offline', onUserOffline);
             socket.disconnect();
         };
     }, []); // Runs only once when the component mounts

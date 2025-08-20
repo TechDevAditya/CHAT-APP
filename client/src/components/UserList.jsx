@@ -7,6 +7,7 @@ function UserList({ users, onSelectUser }) {
             <ul>
                 {users.map((user) => (
                     <li key={user._id} onClick={() => onSelectUser(user)}>
+                        <span className={user.isOnline ? 'status-dot online' : 'status-dot offline'}></span>
                         {user.name}
                     </li>
                 ))}
