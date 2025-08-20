@@ -58,12 +58,6 @@ io.on('connection', (socket) => {
                 text,
               });
             }
-
-
-              // io.to(socketId).emit('receive_message', {
-              //     sender,
-              //     text,
-              // });
           });
       }
   });

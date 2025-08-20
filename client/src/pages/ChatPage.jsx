@@ -13,7 +13,7 @@ function ChatPage(){
 
     useEffect(() => {
         // Connect to the server
-        // socket.connect();
+        socket.connect();
 
         //register current user with server
         const userId = localStorage.getItem('userId');
@@ -26,13 +26,6 @@ function ChatPage(){
             console.log("A message was received from the server:", data);
             setMessages(prevMessages => [...prevMessages, data]);
         }
-
-        // function onReceiveMessage(data) {
-        //     // To avoid echo
-        //     if (data.sender.id !== userId) {
-        //         setMessages(prevMessages => [...prevMessages, data]);
-        //     }
-        // }
 
         // Listen for incoming messages
         socket.on('receive_message', onReceiveMessage);
@@ -55,7 +48,7 @@ function ChatPage(){
         // Cleanup function: This runs when the component unmounts
         return () => {
             socket.off('receive_message', onReceiveMessage);
-            // socket.disconnect();
+            socket.disconnect();
         };
     }, []); // Runs only once when the component mounts
 
