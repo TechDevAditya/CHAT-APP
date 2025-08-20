@@ -81,11 +81,23 @@ io.on('connection', (socket) => {
           if (socketIds.length === 0) {
               delete userSocketMap[currentUserId];
               await User.findByIdAndUpdate(currentUserId, { isOnline: false, lastSeen: new Date() });
-              socket.broadcast.emit('user_offline', { userId: currentUserId });
+              socket.broadcast.emit('user_offline', { userId: currentUserId, lastSeen: new Date()});
           }
       }
       console.log('User disconnected:', socket.id);
   });
+
+  //typing event
+  socket.on('typing', ({from, to})  => {
+    const recipientSockerIds = userSocketMap[to];
+    if(recipientSockerIds) {
+      recipientSockerIds.forEach(socketId => {
+        if(socketId != socket.id){
+          io.to(socketId).emit('user_typing', {from});
+        }
+      });
+    }
+  })
 
   // socket.on('disconnect', () => {
   //     // Find which user this socket belonged to and remove it

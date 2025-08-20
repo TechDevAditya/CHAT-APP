@@ -16,7 +16,14 @@ function MessageInput({ onSendMessage }) {
             <input
                 type="text"
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={(e) => {
+                    setMessage(e.target.value);
+                    const senderId = localStorage.getItem("userId");
+                    const recipientId = selectedUser?._id;
+                    if(recipientId) {
+                        socket.emit("typing", { from: senderId, to: recipientId});
+                    }
+                }}
                 placeholder="Type a message..."
             />
             <button type="submit">Send</button>

@@ -10,6 +10,7 @@ function ChatPage(){
     const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isConnected, setIsConnected] = useState(socket.connected);
+    const [typingUser, setTypingUser] = useState(null);
 
     useEffect(() => {
         // Connect to the server
@@ -41,15 +42,22 @@ function ChatPage(){
         function onUserOffline({userId, lastSeen}) {
             setUsers(prevUsers =>
                 prevUsers.map(user =>
-                    user._id === userId ? {...user, isOnline: false, lastSeen: lastSeen} : user
+                    user._id === userId ? {...user, isOnline: false, lastSeen} : user
                 )
             );
         }
 
-        // Listen for incoming messages
-        socket.on('receive_message', onReceiveMessage);
+        function onUserTyping({from}) {
+            setTypingUser(from);
+            setTimeout(() => setTypingUser(null), 2000);  //clear after 2 sec
+        }
+
+        //Listeners 
+        socket.on('receive_message', onReceiveMessage); // Listen for incoming messages
         socket.on('user_online', onUserOnline);     
         socket.on('user_offline', onUserOffline);   
+        socket.on("user_typing", onUserTyping);
+
 
         // Fetch the initial user list
         const fetchUsers = async () => {
@@ -118,9 +126,14 @@ function ChatPage(){
             <div className="chat-area">
                 {selectedUser ? (
                     <>
-                        <h2>Chatting with: {selectedUser.name}</h2>
+                        <h2>Chatting with: {selectedUser.name}
+                        </h2>
+                        <h2>
+                            {selectedUser.isOnline ? <span style={{color:"green"}}>(online)</span> : <span style = {{color:"grey"}}>(last seen {new Date(selectedUser.lastSeen).toLocaleString()})</span>}
+                        </h2>
                         <MessageWindow messages={messages} currentUserId= {localStorage.getItem('userId')} />
                         <MessageInput onSendMessage={handleSendMessage} />
+                        {typingUser === selectedUser._id && <p> {selectedUser.name} is typing... </p>}
                     </>
                 ) : (
                     <h2>Please select a user to start chatting.</h2>
