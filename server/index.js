@@ -51,10 +51,19 @@ io.on('connection', (socket) => {
         
       if (recipientSocketIds && recipientSocketIds.length > 0) {
           recipientSocketIds.forEach(socketId => {
+            // don't send back to the sender's own socket
+            if (socketId !== socket.id) {
               io.to(socketId).emit('receive_message', {
-                  sender,
-                  text,
+                sender,
+                text,
               });
+            }
+
+
+              // io.to(socketId).emit('receive_message', {
+              //     sender,
+              //     text,
+              // });
           });
       }
   });
