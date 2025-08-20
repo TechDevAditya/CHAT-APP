@@ -13,7 +13,7 @@ function ChatPage(){
 
     useEffect(() => {
         // Connect to the server
-        socket.connect();
+        // socket.connect();
 
         //register current user with server
         const userId = localStorage.getItem('userId');
@@ -55,7 +55,7 @@ function ChatPage(){
         // Cleanup function: This runs when the component unmounts
         return () => {
             socket.off('receive_message', onReceiveMessage);
-            socket.disconnect();
+            // socket.disconnect();
         };
     }, []); // Runs only once when the component mounts
 
