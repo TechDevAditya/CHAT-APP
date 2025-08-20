@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
   });
 
   //typing event
-  socket.on('typing', ({from, to})  => {
+  socket.on('user_typing', ({from, to})  => {
     const recipientSockerIds = userSocketMap[to];
     if(recipientSockerIds) {
       recipientSockerIds.forEach(socketId => {
@@ -97,7 +97,18 @@ io.on('connection', (socket) => {
         }
       });
     }
-  })
+  });
+
+  socket.on('stop_typing', ({ from, to }) => {
+    const recipientSocketIds = userSocketMap[to];
+    if (recipientSocketIds) {
+      recipientSocketIds.forEach(socketId => {
+        if (socketId !== socket.id) {
+          io.to(socketId).emit('stop_typing', { from });
+        }
+      });
+    }
+  });
 
   // socket.on('disconnect', () => {
   //     // Find which user this socket belonged to and remove it

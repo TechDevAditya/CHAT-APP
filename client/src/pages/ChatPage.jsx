@@ -4,13 +4,13 @@ import UserList from '../components/UserList';
 import MessageWindow from '../components/MessageWindow'; 
 import MessageInput from '../components/MessageInput';  
 import {socket} from '../socket';  //import the shared socket instant
+import TypingIndicator from "../components/TypingIndicator";
 
 function ChatPage(){
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isConnected, setIsConnected] = useState(socket.connected);
-    const [typingUser, setTypingUser] = useState(null);
 
     useEffect(() => {
         // Connect to the server
@@ -56,7 +56,6 @@ function ChatPage(){
         socket.on('receive_message', onReceiveMessage); // Listen for incoming messages
         socket.on('user_online', onUserOnline);     
         socket.on('user_offline', onUserOffline);   
-        socket.on("user_typing", onUserTyping);
 
 
         // Fetch the initial user list
@@ -131,9 +130,18 @@ function ChatPage(){
                         <h2>
                             {selectedUser.isOnline ? <span style={{color:"green"}}>(online)</span> : <span style = {{color:"grey"}}>(last seen {new Date(selectedUser.lastSeen).toLocaleString()})</span>}
                         </h2>
-                        <MessageWindow messages={messages} currentUserId= {localStorage.getItem('userId')} />
-                        <MessageInput onSendMessage={handleSendMessage} />
-                        {typingUser === selectedUser._id && <p> {selectedUser.name} is typing... </p>}
+
+                        <MessageWindow
+                         messages={messages}
+                         currentUserId= {localStorage.getItem('userId')} 
+                        />
+
+                        <TypingIndicator selectedUser={selectedUser} />
+
+                        <MessageInput 
+                            onSendMessage={handleSendMessage} 
+                            selectedUser={selectedUser}
+                        />
                     </>
                 ) : (
                     <h2>Please select a user to start chatting.</h2>
