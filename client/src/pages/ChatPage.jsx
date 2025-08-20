@@ -9,6 +9,7 @@ function ChatPage(){
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
+    const [isConnected, setIsConnected] = useState(socket.connected);
 
     useEffect(() => {
         // Connect to the server
@@ -20,12 +21,18 @@ function ChatPage(){
             socket.emit('register_user', userId);
         }
 
+        // New version for testing
         function onReceiveMessage(data) {
-            // To avoid echo
-            if (data.sender.id !== userId) {
-                setMessages(prevMessages => [...prevMessages, data]);
-            }
+            console.log("A message was received from the server:", data);
+            setMessages(prevMessages => [...prevMessages, data]);
         }
+
+        // function onReceiveMessage(data) {
+        //     // To avoid echo
+        //     if (data.sender.id !== userId) {
+        //         setMessages(prevMessages => [...prevMessages, data]);
+        //     }
+        // }
 
         // Listen for incoming messages
         socket.on('receive_message', onReceiveMessage);
@@ -101,4 +108,5 @@ function ChatPage(){
 }
 
 export default ChatPage;
+
 

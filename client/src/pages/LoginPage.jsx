@@ -19,7 +19,7 @@ function LoginPage() {
             localStorage.setItem('userId', userId);
             localStorage.setItem('name', name);
 
-            axios.defaults.headers.common['Authorization'] = 'Bearer ${token}';
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
             alert('Login successful!');
         }

@@ -25,8 +25,6 @@ app.use('/api/users', require('./routes/user.routes.js'));  // use users routes 
 
 const server = http.createServer(app);     //Create http server from express app
 
-const userSocketMap = {};
-
 const io = new Server(server,{
   cors: {
     origin: "http://localhost:5173",
@@ -34,37 +32,51 @@ const io = new Server(server,{
   }
 });
 
+// server/index.js
+
+const userSocketMap = {}; // Maps userId to an array of socketIds
+
 io.on('connection', (socket) => {
   console.log('A new user connected:', socket.id);
 
-  //listens for an event when a user registers with their ID
   socket.on('register_user', (userId) => {
-    userSocketMap[userId] = socket.id;
-    console.log('User registered:', userId, 'with socket ID:', socket.id);
+      if (!userSocketMap[userId]) {
+          userSocketMap[userId] = [];
+      }
+      userSocketMap[userId].push(socket.id);
   });
 
-  //Listens for a private message
-  socket.on('send_message', ({recipientId, text, sender}) => {
-    const recipientSocketId = userSocketMap[recipientId];
-
-    if(recipientSocketId){
-      //send messages directly to the recipient's alloted socket
-      io.to(recipientSocketId).emit('receive_message', {
-        sender,
-        text,
-      });
-    }
+  socket.on('send_message', ({ recipientId, text, sender }) => {
+      const recipientSocketIds = userSocketMap[recipientId];
+        
+      if (recipientSocketIds && recipientSocketIds.length > 0) {
+          recipientSocketIds.forEach(socketId => {
+              io.to(socketId).emit('receive_message', {
+                  sender,
+                  text,
+              });
+          });
+      }
   });
 
   socket.on('disconnect', () => {
-    //clean up the map when user disconnects
-    for(const userId in userSocketMap){
-      if(userSocketMap[userId] == socket.id){
-        delete userSocketMap[userId];
-        break;
+      // Find which user this socket belonged to and remove it
+      for (const userId in userSocketMap) {
+          const socketIds = userSocketMap[userId];
+          const index = socketIds.indexOf(socket.id);
+
+          if (index !== -1) {
+              // Remove just that one socket ID from the list
+              socketIds.splice(index, 1);
+
+              // If the user has no more connections, remove them entirely
+              if (socketIds.length === 0) {
+                  delete userSocketMap[userId];
+              }
+              break; // Stop searching once we've found and removed it
+          }
       }
-    }
-    console.log('User disconnected:', socket.id);
+      console.log('User disconnected:', socket.id);
   });
 });
 

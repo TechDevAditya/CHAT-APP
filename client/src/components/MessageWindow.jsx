@@ -9,9 +9,12 @@ function MessageWindow({ messages, currentUserId }) {
                     //check if the message sender is the current user
                     const isCurrentUser = msg.sender.id === currentUserId;
                     const senderName = isCurrentUser ? 'You' : msg.sender.name;
-                    <li key={index}>
-                        <strong>{senderName}: </strong> {msg.text}
-                    </li>
+
+                    return(
+                        <li key={index}>
+                            <strong>{senderName}: </strong> {msg.text}
+                        </li>
+                    )
                 })}
             </ul>
         </div>
